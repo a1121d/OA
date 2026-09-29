@@ -13,7 +13,6 @@
             --oa-blue: #002d72;
             --oa-red: #e31837;
         }
-        /* Use dvh (dynamic viewport height) to account for mobile browser bars */
         body { 
             background-color: #f4f7f9; 
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
@@ -31,11 +30,9 @@
         .gif-item { width: 100%; height: 90px; object-fit: cover; border-radius: 6px; cursor: pointer; background: #eee; }
         .emoji-item { cursor: pointer; text-align: center; padding: 5px; }
         
-        /* Audio Player Styling */
         .audio-container { width: 100%; min-width: 200px; padding: 5px 0; }
         audio { height: 40px; width: 100%; filter: saturate(0%) contrast(110%); }
         
-        /* Corporate Styling & S23/S32 Height Fixes */
         header { padding-top: calc(var(--safe-top) + 10px) !important; background-color: var(--oa-blue); flex-shrink: 0; }
         #inputBarContainer { 
             padding-bottom: calc(var(--safe-bottom) + 10px) !important; 
@@ -45,12 +42,10 @@
         }
         .oa-logo { width: 36px; height: 36px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
-        /* Message Action Buttons */
         .msg-actions { opacity: 0; transition: opacity 0.2s; }
         .message-wrapper:hover .msg-actions { opacity: 1; }
         .reply-preview { border-left: 3px solid var(--oa-blue); background: #f1f5f9; }
 
-        /* Toggle Switch Styling */
         .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.2); transition: .4s; border-radius: 20px; }
@@ -63,7 +58,6 @@
 </head>
 <body class="flex flex-col max-w-md mx-auto bg-white border-x shadow-2xl overflow-hidden">
 
-    <!-- PASSWORD LOCK -->
     <div id="lockScreen" class="fixed inset-0 z-[100] bg-[#002d72] flex flex-col items-center justify-center p-6 text-white text-center">
         <div class="oa-logo w-24 h-24 mb-6">
             <svg viewBox="0 0 100 100" class="w-full h-full">
@@ -79,7 +73,6 @@
         <p id="errorMsg" class="text-red-300 mt-4 text-sm hidden font-bold">Invalid credentials.</p>
     </div>
 
-    <!-- GIF MODAL -->
     <div id="gifModal" class="fixed inset-0 z-[90] bg-black/90 p-4 flex flex-col">
         <div class="bg-white rounded-t-xl p-4 flex gap-2">
             <input type="text" id="gifSearchInput" placeholder="Search GIPHY..." class="flex-1 border rounded-full px-4 py-2 outline-none text-black bg-gray-100">
@@ -88,7 +81,6 @@
         <div id="gifResults" class="bg-white rounded-b-xl p-2 gif-grid flex-1"></div>
     </div>
 
-    <!-- EMOJI MODAL -->
     <div id="emojiModal" class="fixed inset-0 z-[95] bg-black/80 p-6 flex flex-col justify-center">
         <div class="bg-white rounded-xl p-2 shadow-2xl">
             <div class="flex justify-between p-2 border-b mb-2">
@@ -99,7 +91,6 @@
         </div>
     </div>
 
-    <!-- CHAT APP -->
     <div id="chatApp" class="h-full flex flex-col w-full overflow-hidden">
         <header class="text-white p-4 pb-2 flex items-center justify-between gap-3 shadow-lg relative z-20">
             <div class="flex items-center gap-3">
@@ -134,9 +125,7 @@
 
         <div id="msgList" class="flex-1 overflow-y-auto px-6 py-4 space-y-6 bg-[#f8fafc]"></div>
 
-        <!-- INPUT BAR CONTAINER -->
         <div id="inputBarContainer" class="w-full flex flex-col relative z-50">
-            <!-- REPLY PREVIEW -->
             <div id="replyBar" class="hidden px-4 py-2 flex items-center justify-between bg-gray-100 border-t text-xs">
                 <div class="reply-preview px-2 py-1 overflow-hidden">
                     <div id="replyUser" class="font-bold text-blue-800"></div>
@@ -176,8 +165,9 @@
         let user = localStorage.getItem('chat_user') || "";
         let replyingTo = null;
         let notificationsEnabled = localStorage.getItem('notif_enabled') === 'true';
+        let presenceChannel;
+        let renderedIds = new Set();
 
-        // NOTIFICATIONS
         function toggleNotifications(enabled) {
             if (enabled) {
                 Notification.requestPermission().then(permission => {
@@ -203,7 +193,6 @@
             });
         }
 
-        // EMOJI GRID
         const emojiList = ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','😧','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','😈','👿','👹','👺','🤡','👻','💀','☠️','👽','👾','🤖','💩'];
         const emojiGrid = document.getElementById('emojiGrid');
         emojiList.forEach(e => {
@@ -218,7 +207,6 @@
             em.style.display = (em.style.display === 'flex') ? 'none' : 'flex'; 
         }
 
-        // GIPHY
         function toggleGifModal() { 
             const gm = document.getElementById('gifModal');
             gm.style.display = (gm.style.display === 'flex') ? 'none' : 'flex'; 
@@ -238,11 +226,12 @@
             window.gtimer = setTimeout(() => searchGifs(e.target.value || 'trending'), 500);
         };
         async function sendGif(url) {
-            await _supabase.from('messages').insert([{ user, type: 'image', url }]);
+            const payload = { user, type: 'image', url };
+            renderMessage(payload); 
+            await _supabase.from('messages').insert([payload]);
             toggleGifModal();
         }
 
-        // UPLOADS
         async function uploadAnyFile(file, forcedType = null) {
             if(!file || !user) return;
             const clipBtn = document.getElementById('clipBtn');
@@ -252,7 +241,9 @@
             if (error) { alert(error.message); clipBtn.innerHTML = '📎'; return; }
             const { data } = _supabase.storage.from('uploads').getPublicUrl(fileName);
             let type = forcedType || (file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'file');
-            await _supabase.from('messages').insert([{ user, type, url: data.publicUrl }]);
+            const payload = { user, type, url: data.publicUrl };
+            renderMessage(payload);
+            await _supabase.from('messages').insert([payload]);
             clipBtn.innerHTML = '📎';
         }
 
@@ -284,6 +275,7 @@
                 cancelReply();
             }
             msgInput.value = '';
+            renderMessage(payload); 
             await _supabase.from('messages').insert([payload]);
         }
 
@@ -321,24 +313,49 @@
             initRealtime();
         }
 
+        function updatePresenceUI() {
+            const state = presenceChannel.presenceState();
+            const users = Object.keys(state);
+            document.getElementById('onlineCount').innerText = `${users.length} ACTIVE NOW`;
+            document.getElementById('userList').innerHTML = users.map(u => 
+                `<li class="flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 bg-blue-600 rounded-full"></span> ${u}
+                </li>`
+            ).join('');
+        }
+
         function initPresence() {
-            const channel = _supabase.channel('room1', { config: { presence: { key: user } } });
-            channel.on('presence', { event: 'sync' }, () => {
-                const state = channel.presenceState();
-                const count = Object.keys(state).length;
-                document.getElementById('onlineCount').innerText = `${count} ACTIVE NOW`;
-                document.getElementById('userList').innerHTML = Object.keys(state).map(u => 
-                    `<li class="flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 bg-blue-600 rounded-full"></span> ${u}
-                    </li>`
-                ).join('');
-            }).subscribe(async (s) => { if (s === 'SUBSCRIBED') await channel.track({ online_at: new Date().toISOString() }); });
+            if (presenceChannel) presenceChannel.unsubscribe();
+            presenceChannel = _supabase.channel('room1', { config: { presence: { key: user } } });
+            presenceChannel
+                .on('presence', { event: 'sync' }, updatePresenceUI)
+                .on('presence', { event: 'join' }, updatePresenceUI)
+                .on('presence', { event: 'leave' }, updatePresenceUI)
+                .subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        await presenceChannel.track({ online_at: new Date().toISOString() });
+                    }
+                });
         }
 
         function renderMessage(data) {
+            // Deduplication: If message has an ID and we already rendered it, skip.
+            if (data.id && renderedIds.has(data.id)) return;
+            
+            // If this is a real message from me (has ID), remove the optimistic placeholder first
+            if (data.id && data.user === user) {
+                const optimistic = msgList.querySelector('.optimistic-msg');
+                if (optimistic) optimistic.remove();
+            }
+
+            if (data.id) renderedIds.add(data.id);
+
             const isMe = data.user === user;
             const wrapper = document.createElement('div');
             wrapper.className = `message-wrapper flex w-full mb-2 group ${isMe ? 'flex-row-reverse' : 'flex-row'}`;
+            
+            // Tag optimistic messages so we can find and remove them when the real one arrives
+            if (!data.id) wrapper.classList.add('optimistic-msg');
             
             let innerContent = `<p class="text-sm leading-relaxed">${data.text || ''}</p>`;
             if (data.type === 'image') innerContent = `<img src="${data.url}" class="rounded-lg max-w-full mt-1 border shadow-sm" onclick="window.open('${data.url}')">`;
@@ -356,13 +373,15 @@
             const time = data.created_at ? new Date(data.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const date = data.created_at ? new Date(data.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : new Date().toLocaleDateString([], { month: 'short', day: 'numeric' });
 
+            const checkColor = data.id ? 'text-blue-400' : 'text-gray-400';
+
             wrapper.innerHTML = `
                 <div class="max-w-[85%] px-4 py-3 rounded-xl shadow-sm border relative ${isMe ? 'bg-[#002d72] text-white border-[#002d72] rounded-tr-none' : 'bg-white text-gray-800 border-gray-200 rounded-tl-none'}">
                     <div class="text-[9px] font-bold uppercase ${isMe ? 'text-blue-200' : 'text-gray-400'} mb-1">${data.user}</div>
                     ${innerContent}
                     <div class="flex items-center justify-end gap-1 mt-2 opacity-60 text-[8px] font-bold">
                         <span>${date} • ${time}</span>
-                        ${isMe ? '<span class="text-red-400 ml-0.5">✓✓</span>' : ''}
+                        ${isMe ? `<span class="${checkColor} ml-0.5">✓✓</span>` : ''}
                     </div>
                 </div>
                 <div class="msg-actions flex flex-col justify-center px-2 gap-2">
@@ -376,7 +395,11 @@
 
         async function loadHistory() {
             const { data } = await _supabase.from('messages').select('*').order('id', { ascending: true });
-            if(data) { msgList.innerHTML = ''; data.forEach(renderMessage); }
+            if(data) { 
+                msgList.innerHTML = ''; 
+                renderedIds.clear();
+                data.forEach(renderMessage); 
+            }
             msgList.scrollTop = msgList.scrollHeight;
         }
 
@@ -393,9 +416,7 @@
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 loadHistory();
-                _supabase.removeAllChannels();
                 initPresence();
-                initRealtime();
             }
         });
 
